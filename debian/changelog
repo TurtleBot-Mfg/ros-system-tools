@@ -1,5 +1,11 @@
+ros-system-tools (0.0.1) precise; urgency=low
+
+  * Initial Release
+
+ -- I Heart Engineering <code@iheartengineering.com>  Thu, 26 Jul 2012 19:46:27 -0400
+
 ros-system-tools (0.0.1) unstable; urgency=low
 
   * source package automatically created by stdeb 0.6.0+git
 
- -- I Heart Engineering <code@iheartengineering.com>  Thu, 26 Jul 2012 09:42:08 -0400
+ -- I Heart Engineering <code@iheartengineering.com>  Thu, 26 Jul 2012 19:46:18 -0400
