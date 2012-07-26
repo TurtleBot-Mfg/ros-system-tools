@@ -1,0 +1,104 @@
+#!/usr/bin/python
+# Software License Agreement (BSD License)
+#
+# Copyright (c) 2008, I Heart Engineering
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+#  * Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#  * Redistributions in binary form must reproduce the above
+#    copyright notice, this list of conditions and the following
+#    disclaimer in the documentation and/or other materials provided
+#    with the distribution.
+#  * Neither the name of I Heart Engineering nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+import qrcode
+import PIL
+import PySide
+import PySide.QtGui
+import PySide.QtCore
+import sys
+import os
+import subprocess
+
+class NetworkDialog(PySide.QtGui.QDialog):
+   
+    def __init__(self):
+        super(NetworkDialog, self).__init__()
+
+        p = subprocess.Popen(['turtlebot-network','ip'], stdout=subprocess.PIPE)
+        ros_master_uri = "http://%s:11311"%p.communicate()[0].strip()
+        p.wait()
+
+        # Generate QR Code
+        qr = qrcode.QRCode(error_correction=1, box_size=14, border=1)
+        qr.add_data(ros_master_uri)
+        qr.make(fit=True)
+        img = qr.make_image()._img
+        self.img_data = img.convert("RGBA").tostring("raw", "RGBA")
+
+        image = PySide.QtGui.QImage(self.img_data, img.size[0], img.size[0], PySide.QtGui.QImage.Format_ARGB32)
+        pixmap = PySide.QtGui.QPixmap.fromImage(image)
+        self.label_qr = PySide.QtGui.QLabel()
+        self.label_qr.setPixmap(pixmap)
+        self.label_qr.setAlignment(PySide.QtCore.Qt.AlignCenter);
+        self.label_qr.setMinimumSize(PySide.QtCore.QSize(480,480));
+
+        self.palette = PySide.QtGui.QPalette()
+        brush = PySide.QtGui.QBrush(PySide.QtGui.QColor(255, 255, 255, 255))
+        brush.setStyle(PySide.QtCore.Qt.SolidPattern);
+        self.palette.setBrush(PySide.QtGui.QPalette.Active, PySide.QtGui.QPalette.Window, brush);
+        self.palette.setBrush(PySide.QtGui.QPalette.Inactive, PySide.QtGui.QPalette.Window, brush);
+        self.palette.setBrush(PySide.QtGui.QPalette.Disabled, PySide.QtGui.QPalette.Window, brush);
+        self.label_qr.setPalette(self.palette)
+        self.label_qr.setFrameShape(PySide.QtGui.QFrame.WinPanel)
+        self.label_qr.setFrameShadow(PySide.QtGui.QFrame.Sunken)
+        self.label_qr.setLineWidth(2)
+        self.label_qr.setAutoFillBackground(True)
+        self.sizePolicy_qr = PySide.QtGui.QSizePolicy(PySide.QtGui.QSizePolicy.MinimumExpanding, PySide.QtGui.QSizePolicy.MinimumExpanding)
+        self.label_qr.setSizePolicy(self.sizePolicy_qr);
+
+        self.label_uri = PySide.QtGui.QLabel()
+        self.label_uri.setText("export ROS_MASTER_URI=%s"%ros_master_uri)
+        self.label_uri.setTextInteractionFlags(PySide.QtCore.Qt.TextSelectableByKeyboard|PySide.QtCore.Qt.TextSelectableByMouse)
+
+        self.button_box = PySide.QtGui.QDialogButtonBox()
+        self.button_box.setStandardButtons(PySide.QtGui.QDialogButtonBox.Ok)
+        PySide.QtCore.QObject.connect(self.button_box, PySide.QtCore.SIGNAL("accepted()"), self.button_ok)
+
+        layout = PySide.QtGui.QVBoxLayout()
+        layout.addWidget(self.label_qr)
+        layout.addWidget(self.label_uri)
+        layout.addWidget(self.button_box)
+        self.setLayout(layout)
+        self.button_box.clicked.connect(self.button_ok)
+        self.setWindowTitle("ROS Network ID")
+       
+    def button_ok(self):
+        self.close()
+
+if __name__ == '__main__':
+    app = PySide.QtGui.QApplication(sys.argv)
+    dialog = NetworkDialog()
+    dialog.show()
+    sys.exit(app.exec_())
