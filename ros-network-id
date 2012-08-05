@@ -40,6 +40,8 @@ import PySide.QtCore
 import sys
 import os
 import subprocess
+import gnomekeyring
+import glib
 
 class NetworkDialog(PySide.QtGui.QDialog):
    
@@ -50,9 +52,19 @@ class NetworkDialog(PySide.QtGui.QDialog):
         ros_master_uri = "http://%s:11311"%p.communicate()[0].strip()
         p.wait()
 
+        p = subprocess.Popen(['turtlebot-network','ssid'], stdout=subprocess.PIPE)
+        network_ssid = p.communicate()[0].strip()
+        p.wait()
+
+        p = subprocess.Popen(['gksudo', 'grep ^psk /etc/NetworkManager/system-connections/Secret'], stdout=subprocess.PIPE)
+        network_psk = p.communicate()[0].strip().split("=")[1]
+        p.wait
+
         # Generate QR Code
         qr = qrcode.QRCode(error_correction=1, box_size=14, border=1)
-        qr.add_data(ros_master_uri)
+        qr_data = "URL: %s\nWIFI: %s\nWIFIPW: %s"%(ros_master_uri,network_ssid,network_psk)
+        print qr_data
+        qr.add_data(qr_data)
         qr.make(fit=True)
         img = qr.make_image()._img
         self.img_data = img.convert("RGBA").tostring("raw", "RGBA")
@@ -62,7 +74,7 @@ class NetworkDialog(PySide.QtGui.QDialog):
         self.label_qr = PySide.QtGui.QLabel()
         self.label_qr.setPixmap(pixmap)
         self.label_qr.setAlignment(PySide.QtCore.Qt.AlignCenter);
-        self.label_qr.setMinimumSize(PySide.QtCore.QSize(480,480));
+        self.label_qr.setMinimumSize(PySide.QtCore.QSize(512,512));
 
         self.palette = PySide.QtGui.QPalette()
         brush = PySide.QtGui.QBrush(PySide.QtGui.QColor(255, 255, 255, 255))
@@ -98,6 +110,7 @@ class NetworkDialog(PySide.QtGui.QDialog):
         self.close()
 
 if __name__ == '__main__':
+    glib.set_application_name('ros-network-id')
     app = PySide.QtGui.QApplication(sys.argv)
     dialog = NetworkDialog()
     dialog.show()
