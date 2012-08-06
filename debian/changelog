@@ -1,3 +1,11 @@
+ros-system-tools (0.0.2~1.gbp9f2509) UNRELEASED; urgency=low
+
+  ** SNAPSHOT build @9f250996f3f659299a9f2a8ce78cf02634e89e5c **
+
+  * Fixing Android support for App Chooser
+
+ -- I Heart Engineering <code@iheartengineering.com>  Sun, 05 Aug 2012 00:26:12 -0400
+
 ros-system-tools (0.0.1) precise; urgency=low
 
   * Initial Release

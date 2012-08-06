@@ -53,20 +53,32 @@ class NetworkDialog(PySide.QtGui.QDialog):
         p.wait()
 
         p = subprocess.Popen(['turtlebot-network','ssid'], stdout=subprocess.PIPE)
-        network_ssid = p.communicate()[0].strip()
+        self.network_ssid = p.communicate()[0].strip()
         p.wait()
+        if (p.returncode == os.EX_OK):
+            self.wifi_mode = True
+            p = subprocess.Popen(['gksudo', "grep ^psk /etc/NetworkManager/system-connections/%s"%self.network_ssid ], stdout=subprocess.PIPE)
+            network_psk = p.communicate()[0].strip().split("=")[1]
+            p.wait
+        else:
+            self.wifi_mode = False
 
-        p = subprocess.Popen(['gksudo', 'grep ^psk /etc/NetworkManager/system-connections/Secret'], stdout=subprocess.PIPE)
-        network_psk = p.communicate()[0].strip().split("=")[1]
-        p.wait
 
         # Generate QR Code
         qr = qrcode.QRCode(error_correction=1, box_size=14, border=1)
-        qr_data = "URL: %s\nWIFI: %s\nWIFIPW: %s"%(ros_master_uri,network_ssid,network_psk)
-        print qr_data
+        if self.wifi_mode == True:
+	    qr_data = "URL: %s\nWIFI: %s\nWIFIPW: %s"%(ros_master_uri,self.network_ssid,network_psk)
+        else:
+            qr_data = "URL: %s"%ros_master_uri
+        #print qr_data
         qr.add_data(qr_data)
         qr.make(fit=True)
         img = qr.make_image()._img
+
+        print ""
+        qr.print_tty()
+        print "\nexport ROS_MASTER_URI=%s"%ros_master_uri
+
         self.img_data = img.convert("RGBA").tostring("raw", "RGBA")
 
         image = PySide.QtGui.QImage(self.img_data, img.size[0], img.size[0], PySide.QtGui.QImage.Format_ARGB32)
