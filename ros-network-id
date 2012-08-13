@@ -41,15 +41,11 @@ import sys
 import os
 import subprocess
 import gnomekeyring
-import glib
 
-class NetworkDialog(PySide.QtGui.QDialog):
-   
+class NetworkInfo():
     def __init__(self):
-        super(NetworkDialog, self).__init__()
-
         p = subprocess.Popen(['turtlebot-network','ip'], stdout=subprocess.PIPE)
-        ros_master_uri = "http://%s:11311"%p.communicate()[0].strip()
+        self.master_uri = "http://%s:11311"%p.communicate()[0].strip()
         p.wait()
 
         p = subprocess.Popen(['turtlebot-network','ssid'], stdout=subprocess.PIPE)
@@ -58,27 +54,43 @@ class NetworkDialog(PySide.QtGui.QDialog):
         if (p.returncode == os.EX_OK):
             self.wifi_mode = True
             p = subprocess.Popen(['gksudo', "grep ^psk /etc/NetworkManager/system-connections/%s"%self.network_ssid ], stdout=subprocess.PIPE)
-            network_psk = p.communicate()[0].strip().split("=")[1]
+            self.network_psk = p.communicate()[0].strip().split("=")[1]
             p.wait
         else:
             self.wifi_mode = False
 
+class NetworkOutput():
+    def __init__(self,ros):
+        # Generate QR Code
+        qr = qrcode.QRCode(error_correction=1, box_size=14, border=1)
+        if ros.wifi_mode == True:
+            qr_data = "URL: %s\nWIFI: %s\nWIFIPW: %s"%(ros.master_uri,ros.network_ssid,ros.network_psk)
+        else:
+            qr_data = "URL: %s"%ros.master_uri
+        #print qr_data
+        qr.add_data(qr_data)
+        qr.make(fit=True)
+
+        print ""
+        qr.print_tty()
+        print "\nexport ROS_MASTER_URI=%s"%ros.master_uri
+
+
+class NetworkDialog(PySide.QtGui.QDialog):
+   
+    def __init__(self,ros):
+        super(NetworkDialog, self).__init__()
 
         # Generate QR Code
         qr = qrcode.QRCode(error_correction=1, box_size=14, border=1)
-        if self.wifi_mode == True:
-	    qr_data = "URL: %s\nWIFI: %s\nWIFIPW: %s"%(ros_master_uri,self.network_ssid,network_psk)
+        if ros.wifi_mode == True:
+	    qr_data = "URL: %s\nWIFI: %s\nWIFIPW: %s"%(ros.master_uri,ros.network_ssid,ros.network_psk)
         else:
-            qr_data = "URL: %s"%ros_master_uri
+            qr_data = "URL: %s"%ros.master_uri
         #print qr_data
         qr.add_data(qr_data)
         qr.make(fit=True)
         img = qr.make_image()._img
-
-        print ""
-        qr.print_tty()
-        print "\nexport ROS_MASTER_URI=%s"%ros_master_uri
-
         self.img_data = img.convert("RGBA").tostring("raw", "RGBA")
 
         image = PySide.QtGui.QImage(self.img_data, img.size[0], img.size[0], PySide.QtGui.QImage.Format_ARGB32)
@@ -103,7 +115,7 @@ class NetworkDialog(PySide.QtGui.QDialog):
         self.label_qr.setSizePolicy(self.sizePolicy_qr);
 
         self.label_uri = PySide.QtGui.QLabel()
-        self.label_uri.setText("export ROS_MASTER_URI=%s"%ros_master_uri)
+        self.label_uri.setText("export ROS_MASTER_URI=%s"%ros.master_uri)
         self.label_uri.setTextInteractionFlags(PySide.QtCore.Qt.TextSelectableByKeyboard|PySide.QtCore.Qt.TextSelectableByMouse)
 
         self.button_box = PySide.QtGui.QDialogButtonBox()
@@ -122,8 +134,12 @@ class NetworkDialog(PySide.QtGui.QDialog):
         self.close()
 
 if __name__ == '__main__':
-    glib.set_application_name('ros-network-id')
-    app = PySide.QtGui.QApplication(sys.argv)
-    dialog = NetworkDialog()
-    dialog.show()
-    sys.exit(app.exec_())
+    ros = NetworkInfo()
+    if sys.stdout.isatty():
+        NetworkOutput(ros)
+        sys.exit(os.EX_OK)
+    else:
+        app = PySide.QtGui.QApplication(sys.argv)
+        dialog = NetworkDialog(ros)
+        dialog.show()
+        sys.exit(app.exec_())
