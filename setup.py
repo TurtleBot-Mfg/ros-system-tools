@@ -18,5 +18,7 @@ setup(name = "ros-system-tools",
     license = "BSD-3-clause",
     scripts = ["ros-network-id"],
     long_description = """These tools provide system support for ROS.""" 
+    data_files=[('/etc/init', ["ros-launch.conf"]),
+               ],
     #classifiers = []     
 ) 
