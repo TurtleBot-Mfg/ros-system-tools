@@ -51,7 +51,7 @@ class NetworkInfo():
         p = subprocess.Popen(['turtlebot-network','ssid'], stdout=subprocess.PIPE)
         self.network_ssid = p.communicate()[0].strip()
         p.wait()
-        if (p.returncode == os.EX_OK):
+        if (p.returncode == os.EX_OK and self.network_ssid):
             self.wifi_mode = True
             p = subprocess.Popen(['gksudo', "grep ^psk /etc/NetworkManager/system-connections/%s"%self.network_ssid ], stdout=subprocess.PIPE)
             self.network_psk = p.communicate()[0].strip().split("=")[1]
