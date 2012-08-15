@@ -1,3 +1,11 @@
+ros-system-tools (0.0.2~1.gbp530a3c) UNRELEASED; urgency=low
+
+  ** SNAPSHOT build @530a3cc33b10e98a294ee3a60cc22a2bbb4d951f **
+
+  * Split ros-network-id to support gui and cmdline modes fixes #1
+
+ -- I Heart Engineering <code@iheartengineering.com>  Mon, 13 Aug 2012 03:45:22 -0400
+
 ros-system-tools (0.0.2~1.gbpfe165d) UNRELEASED; urgency=low
 
   ** SNAPSHOT build @fe165db57e92de8a12caff579c8f42c90c8013b3 **
