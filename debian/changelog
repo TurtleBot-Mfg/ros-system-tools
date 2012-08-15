@@ -1,3 +1,19 @@
+ros-system-tools (0.0.2) precise; urgency=low
+
+  * Fix for blank ssid
+
+ -- I Heart Engineering <code@iheartengineering.com>  Wed, 15 Aug 2012 07:45:35 -0400
+
+ros-system-tools (0.0.2~1.gbp410fcf) UNRELEASED; urgency=low
+
+  ** SNAPSHOT build @410fcf597a253488a045aa2c190ce16f47bcdfa4 **
+
+  * Upstart scripting to launch roslaunch *.launch files in /etc/ros/launch.d
+  * Daemonic launch file launcher with notify support Secretly supports sequencing launches by numbering the files and pausing inbetween
+  * debian/changelog
+
+ -- I Heart Engineering <code@iheartengineering.com>  Wed, 15 Aug 2012 03:44:06 -0400
+
 ros-system-tools (0.0.2~1.gbp530a3c) UNRELEASED; urgency=low
 
   ** SNAPSHOT build @530a3cc33b10e98a294ee3a60cc22a2bbb4d951f **
