@@ -16,7 +16,7 @@ setup(name = "ros-system-tools",
     author_email = "code@iheartengineering.com",
     url = "http://www.iheartengineering.com",
     license = "BSD-3-clause",
-    scripts = ["ros-network-id"],
+    scripts = ["ros-network-id","rosmetalaunch"],
     long_description = """These tools provide system support for ROS.""" 
     data_files=[('/etc/init', ["ros-launch.conf"]),
                ],

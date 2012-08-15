@@ -1,0 +1,83 @@
+#!/usr/bin/python
+import os
+import sys
+import stat
+import time
+import argparse
+import subprocess
+import xml.dom.minidom
+
+LAUNCH_DELAY = 5
+
+def get_description(file):
+    dom = xml.dom.minidom.parse(file)
+    description = dom.getElementsByTagName("description")[0]
+    brief = description.getAttribute("brief")
+    dom.unlink()
+    return brief
+
+def launcher(file):
+    try:
+        pid = os.fork()
+        if pid > 0:
+            return
+    except Exception, e:
+        print e, ": Initial fork"
+        sys.exit(os.EX_OSERR)
+
+    output_log = open("/tmp/%s.log"%os.path.basename(file), "a+")
+    error_log = open("/tmp/%s.log"%os.path.basename(file), "a+", 0)
+    null_input = open("/dev/null", "r")
+
+    os.dup2(null_input.fileno(), sys.stdin.fileno())
+    os.dup2(output_log.fileno(), sys.stdout.fileno())
+    os.dup2(error_log.fileno(), sys.stderr.fileno())
+
+    try:
+        pid = os.fork()
+        if pid > 0:
+            sys.exit(os.EX_OK)
+    except Exception, e:
+        print e, ": Secondary fork"
+        sys.exit(os.EX_OSERR)
+
+    os.setsid()
+    os.umask(stat.S_IWOTH)
+    launch_dir = os.path.dirname(file)
+    if launch_dir:
+        os.chdir(launch_dir)
+    
+    try:
+        pid = os.fork()
+        if pid > 0:
+            # log PID here
+            sys.exit(os.EX_OK)
+    except Exception, e:
+        print e, ": Tertiary fork"
+        sys.exit(os.EX_OSERR)
+
+    info = get_description(file)
+    p = subprocess.Popen("DISPLAY=:0 /usr/bin/notify-send --icon=ros-tool --category='network.connected' 'ROS Launch' '%s'"%info, stdout=subprocess.PIPE, shell=True)
+    p.wait()
+    p = subprocess.Popen("roslaunch %s"%file, stdout=subprocess.PIPE, shell=True)
+    p.wait()
+    sys.exit(os.EX_OK)
+
+
+def islaunchfile(file): return file.endswith(".launch")
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(prog='rosmetalaunch',
+                                     epilog='ROS MetaLaunch Tool')
+    parser.add_argument('launch_path', help='Launch Directory')
+    args = parser.parse_args()
+    try:
+        files = os.listdir(args.launch_path)
+    except Exception, e:
+        print e, ": Invalid launch directory"
+        sys.exit(os.EX_OSFILE)
+
+    launchfiles = sorted(filter(islaunchfile, files))
+    for file in launchfiles[:]:
+        launcher("%s/%s"%(args.launch_path,file))
+        time.sleep(LAUNCH_DELAY)
